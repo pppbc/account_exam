@@ -1,13 +1,15 @@
 package posts
 
 import (
-	"account_exam/lib"
+	"account_exam/lib/json_message"
 	"account_exam/models"
+	"account_exam/proto"
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
 )
 
+//获取岗位列表
 func List(r *gin.Context) {
 	//获取参数
 	plant_id, err := strconv.Atoi(r.Param("plantId"))
@@ -15,18 +17,17 @@ func List(r *gin.Context) {
 		log.Println(err)
 		return
 	}
-	//初始化一个posts对象
-	var input models.Po
+	//初始化input对象
+	var input models.PostInput
 	input.PlantID = plant_id
 
 	//获取
-	if info, err := input.GetByPlantsId(); err != nil {
+	if output, err := input.GetByPlantsId(); err != nil {
 		log.Println(err)
-		lib.ResFail(r, "Get Posts Failed")
+		json_message.ResFail(r, "get posts failed")
 		return
 	} else {
-		log.Println(info)
-		lib.ResOk(r, "succeed", info)
+		json_message.ResOk(r, "succeed", output)
 		return
 	}
 }
@@ -34,35 +35,135 @@ func List(r *gin.Context) {
 //新增一组数据
 func Add(r *gin.Context) {
 	//获取参数
-	plant_id, err := strconv.Atoi(r.PostForm("plant_id"))
+	plant_id, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		lib.ResFail(r, "Type Failed")
+		json_message.ResFail(r, "type failed")
 		return
 	}
-	department_id, err := strconv.Atoi(r.PostForm("department_id"))
+	department_id, err := strconv.Atoi(r.PostForm("departmentId"))
 	if err != nil {
 		log.Println(err)
-		lib.ResFail(r, "Type Failed")
+		json_message.ResFail(r, "type failed")
 	}
-	deleted, err := strconv.ParseBool(r.PostForm("deleted"))
-	if err != nil {
-		log.Println(err)
-		lib.ResFail(r, "Type Failed")
-		return
-	}
-	//input数据
-	var input models.Po
+
+	//初始化input
+	var input models.PostInput
 	input.Name = r.PostForm("name")
 	input.DepartmentID = department_id
 	input.PlantID = plant_id
-	input.Deleted = deleted
 	input.Description = r.PostForm("description")
 
+	//添加记录
 	if err := input.Create(); err != nil {
 		log.Println(err)
-		lib.ResFail(r, "Create Failed")
+		json_message.ResFail(r, "create post failed")
 	} else {
-		lib.ResOk(r, "success", nil)
+		json_message.ResOk(r, "success", nil)
+	}
+}
+
+//获取指定岗位
+func Get(r *gin.Context) {
+	//获取请求数据
+	plant_id, err := strconv.Atoi(r.Param("plantId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+	id, err := strconv.Atoi(r.Param("postId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+
+	//初始化input
+	var input models.PostInput
+	input.PlantID = plant_id
+	input.ID = id
+
+	//获取记录
+	var output proto.Posts
+	if err := input.Get(&output); err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "get post failed")
+	} else {
+		json_message.ResOk(r, "success", output)
+	}
+}
+
+//更新指定岗位
+func Update(r *gin.Context) {
+	//获取请求数据
+	plant_id, err := strconv.Atoi(r.Param("plantId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+	id, err := strconv.Atoi(r.Param("postID"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+	department_id, err := strconv.Atoi(r.Param("departmentId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+
+	//初始化input
+	var input models.PostInput
+	input.ID = id
+	input.PlantID = plant_id
+
+	input.Name = r.PostForm("name")
+	input.DepartmentID = department_id
+	input.Description = r.PostForm("description")
+
+	//更新记录
+	if err := input.Update(); err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "update post failed")
+		return
+	} else {
+		json_message.ResOk(r, "success", nil)
+		return
+	}
+
+}
+
+//删除指定岗位
+func Delete(r *gin.Context) {
+	//获取请求数据
+	plant_id, err := strconv.Atoi(r.Param("plantId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+	id, err := strconv.Atoi(r.Param("postId"))
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "type failed")
+		return
+	}
+
+	//初始化input
+	var input models.PostInput
+	input.ID = id
+	input.PlantID = plant_id
+
+	//删除
+	if err := input.DeleteById(); err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "delete post failed")
+		return
+	} else {
+		json_message.ResOk(r, "success", nil)
 	}
 }

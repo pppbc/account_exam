@@ -7,11 +7,11 @@ import (
 	"log"
 )
 
-type St struct {
+type StaffInput struct {
 	proto.Staffs
 }
 
-func (s St) GetByPlantsId(info interface{}) (err error) {
+func (s StaffInput) GetByPlantsId(info interface{}) (err error) {
 	query1 := `With t1 AS(
 	SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post FROM staffs s
 	LEFT JOIN departments_users_rel r ON s.id=r.staff_id
@@ -25,7 +25,7 @@ SELECT json_agg(re.*) FROM t1 re`
 	return
 }
 
-func (s St) Get(info interface{}) (err error) {
+func (s StaffInput) Get(info interface{}) (err error) {
 	query := `WITH t1 AS(
 	SELECT s.*,row_to_json(d.*) AS department ,row_to_json(p.*) AS post FROM staffs s
 	LEFT JOIN departments_users_rel r ON s.id=r.staff_id
@@ -38,12 +38,12 @@ func (s St) Get(info interface{}) (err error) {
 	return
 }
 
-func (s St) Create() (err error) {
+func (s StaffInput) Create() (err error) {
 	tx := db.DB.MustBegin()
 
-	query := `INSERT INTO staffs(name,uid,plant_id,deleted,sex,job_number,avatar) values($1,$2,$3,$4,$5,$6,$7)`
+	query := `INSERT INTO staffs(name,uid,plant_id,sex,job_number,avatar) values($1,$2,$3,$4,$5,$6)`
 
-	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Deleted, s.Sex, s.JobNumber, s.Avatar); err != nil {
+	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Sex, s.JobNumber, s.Avatar); err != nil {
 		tx.Rollback()
 		return
 	} else {
@@ -52,16 +52,16 @@ func (s St) Create() (err error) {
 	}
 }
 
-func (s St) Update() (err error) {
+func (s StaffInput) Update() (err error) {
 	tx := db.DB.MustBegin()
 
-	query := `UPDATE staffs SET (name,uid,plant_id,deleted,sex,job_number,avatar)=($1,$2,$3,$4,$5,$6,$7) 
-	WHERE plant_id=$3 AND id=$8`
+	query := `UPDATE staffs SET (name,uid,sex,job_number,avatar,updated_at)=($1,$2,$4,$5,$6,CURRENT_TIMESTAMP) 
+	WHERE plant_id=$3 AND id=$7`
 	log.Println(s.Deleted)
 	log.Println(s.PlantID)
 	log.Println(s.ID)
 
-	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Deleted, s.Sex, s.JobNumber, s.Avatar, s.ID); err != nil {
+	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Sex, s.JobNumber, s.Avatar, s.ID); err != nil {
 		tx.Rollback()
 		return
 	} else {
@@ -70,7 +70,7 @@ func (s St) Update() (err error) {
 	}
 }
 
-func (s St) DeleteById() (err error) {
+func (s StaffInput) DeleteById() (err error) {
 	tx := db.DB.MustBegin()
 	query1 := `UPDATE staffs SET deleted=true ,updated_at = CURRENT_TIMESTAMP, uid = NULL
 		WHERE plant_id=$1 AND id=$2`
