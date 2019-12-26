@@ -38,31 +38,6 @@ type Plants struct {
 	Deleted      bool      `json:"deleted" db:"deleted"`
 }
 
-//部门
-type Department struct {
-	ID          int       `json:"id" db:"id"`
-	ParentID    int       `json:"parentId" db:"parent_id"`
-	Name        string    `json:"name" db:"name"`
-	Code        string    `json:"code" db:"code"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
-	PlantID     int       `json:"plantId" db:"plant_id"`
-	Deleted     bool      `json:"deleted" db:"deleted"`
-	Description string    `json:"description" db:"description"`
-}
-
-//岗位
-type Posts struct {
-	ID           int       `json:"id" db:"id"`
-	PlantID      int       `json:"plantId" db:"plant_id"`
-	DepartmentID int       `json:"departmentId" db:"department_id"`
-	Name         string    `json:"name" db:"name"`
-	Description  string    `json:"description" db:"description"`
-	Deleted      bool      `json:"deleted" db:"deleted"`
-	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt    time.Time `json:"updatedAt" db:"updated_at"`
-}
-
 //用户
 type Users struct {
 	ID            int       `json:"id" db:"id"`

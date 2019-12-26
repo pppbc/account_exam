@@ -1,64 +1,88 @@
 package models
 
 import (
-	"account_exam/cmd/db"
+	database "account_exam/cmd/db"
 	"account_exam/proto"
+	"github.com/jmoiron/sqlx"
 )
 
-type PostInput struct {
-	proto.Posts
+type postsController struct {
+	db *sqlx.DB
 }
 
-func (p PostInput) GetByPlantsId() (info []proto.Posts, err error) {
-	query := `SELECT * FROM plant_posts WHERE plant_id=$1`
-	err = database.DB.Select(&info, query, p.PlantID)
+var PlantPost = &postsController{db: database.DB}
+
+func (p postsController) List(plantId int, output *[]*proto.PlantPostsOutput) (err error) {
+	//noinspection ALL
+	query := `
+	SELECT * 
+	FROM plant_posts 
+	WHERE plant_id=$1`
+
+	err = p.db.Select(output, query, plantId)
 	return
 }
 
-func (p PostInput) Get() (info proto.Posts, err error) {
-	query := `SELECT * FROM plant_posts WHERE plant_id=$1 AND id=$2`
-	err = database.DB.Get(&info, query, p.PlantID, p.ID)
+func (p postsController) Get(plantId, id int, output interface{}) (err error) {
+	//noinspection ALL
+	query := `
+	SELECT * 
+	FROM plant_posts 
+	WHERE plant_id=$1 AND id=$2`
+
+	err = p.db.Get(output, query, plantId, id)
 	return
 }
 
-func (p PostInput) Create() (err error) {
-	tx := database.DB.MustBegin()
+func (p postsController) Create(plantId int, input proto.PlantPostsInput, output interface{}) (err error) {
+	tx := p.db.MustBegin()
+	//noinspection ALL
 
-	query := `INSERT INTO plant_posts(name,department_id,plant_id,description) values($1,$2,$3,$4)`
+	query := `
+	INSERT INTO plant_posts(
+		name,department_id,plant_id,description
+	) VALUES (
+	    $1,$2,$3,$4
+	)
+	RETURNING *`
 
-	if _, err = tx.Exec(query, p.Name, p.DepartmentID, p.PlantID, p.Description); err != nil {
-		tx.Rollback()
-		return
-	} else {
-		tx.Commit()
-		return
-	}
+	err = tx.Get(output, query, input.Name, input.DepartmentID, plantId, input.Description)
+
+	tx.Commit()
+	return
 }
 
-func (p PostInput) Update() (err error) {
-	tx := database.DB.MustBegin()
+func (p postsController) Update(plantId, id int, input proto.PlantPostsInput, output interface{}) (err error) {
+	tx := p.db.MustBegin()
 
-	query := `UPDATE plant_posts 
-				SET (name,department_id,description,updated_at)=($1,$2,$3,CURRENT_TIMESTAMP) 
-				WHERE plant_id=$4 AND id=$5`
+	//noinspection ALL
+	query := `
+	UPDATE plant_posts 
+	SET (
+	     name,department_id,description,updated_at
+	) = (
+	     $1,$2,$3,CURRENT_TIMESTAMP
+	) 
+	WHERE plant_id=$4 AND id=$5
+	RETURNING *`
 
-	if _, err = tx.Exec(query, p.Name, p.DepartmentID, p.Description, p.PlantID, p.ID); err != nil {
-		tx.Rollback()
-		return
-	} else {
-		tx.Commit()
-		return
-	}
+	err = tx.Get(output, query, input.Name, input.DepartmentID, input.Description, plantId, id)
+
+	tx.Commit()
+	return
+
 }
 
-func (p PostInput) DeleteById() (err error) {
-	tx := database.DB.MustBegin()
+func (p postsController) Delete(plantId, id int) (err error) {
+	tx := p.db.MustBegin()
 
-	query1 := `UPDATE plant_posts 
-				SET deleted=true ,updated_at = CURRENT_TIMESTAMP ,department_id=0
-				WHERE plant_id=$1 AND id=$2`
+	//noinspection ALL
+	query1 := `
+	UPDATE plant_posts 
+	SET deleted=true ,updated_at = CURRENT_TIMESTAMP ,department_id=0
+	WHERE plant_id=$1 AND id=$2`
 
-	if _, err = tx.Exec(query1, p.PlantID, p.ID); err != nil {
+	if _, err = tx.Exec(query1, plantId, id); err != nil {
 		tx.Rollback()
 		return
 	} else {

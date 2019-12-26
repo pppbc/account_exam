@@ -1,13 +1,18 @@
 package staffs
 
 import (
-	"account_exam/lib/json_message"
+	"account_exam/lib/apires"
 	"account_exam/models"
 	"account_exam/proto"
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
 )
+
+type B struct {
+	PlantId int `param:"plantId"`
+	ID      int `param:"id"`
+}
 
 //员工列表
 func List(r *gin.Context) {
@@ -18,7 +23,7 @@ func List(r *gin.Context) {
 	plantId, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type failed")
+		apires.ResFail(r, "type failed")
 		return
 	}
 
@@ -28,10 +33,10 @@ func List(r *gin.Context) {
 	//获取数据（这里需要返回staffs-users-departments-posts）
 	if err := models.Staff.List(plantId, &params, &output); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "get staffs failed")
+		apires.ResFail(r, "get staffs failed")
 		return
 	} else {
-		json_message.ResOk(r, "succeed", output)
+		apires.ResOk(r, "succeed", output)
 		return
 	}
 }
@@ -43,14 +48,14 @@ func Add(r *gin.Context) {
 	err := r.Bind(&input)
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "bind failed")
+		apires.ResFail(r, "bind failed")
 		return
 	}
 	//获取参数
 	plant_id, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Type failed")
+		apires.ResFail(r, "Type failed")
 		return
 	}
 
@@ -58,9 +63,9 @@ func Add(r *gin.Context) {
 	var output proto.StaffsOutput
 	if err := models.Staff.Create(plant_id, &input, &output); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Create Failed")
+		apires.ResFail(r, "Create Failed")
 	} else {
-		json_message.ResOk(r, "success", output)
+		apires.ResOk(r, "success", output)
 	}
 }
 
@@ -70,21 +75,21 @@ func Deleted(r *gin.Context) {
 	plantId, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type error")
+		apires.ResFail(r, "type error")
 		return
 	}
 	staffId, err := strconv.Atoi(r.Param("staffId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type error")
+		apires.ResFail(r, "type error")
 		return
 	}
 	//删除staffs表记录，删除department-users-rel表记录
 	if err := models.Staff.Delete(plantId, staffId); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "deleted failed")
+		apires.ResFail(r, "deleted failed")
 	} else {
-		json_message.ResOk(r, "deleted success", nil)
+		apires.ResOk(r, "deleted success", nil)
 	}
 }
 
@@ -94,13 +99,13 @@ func Get(r *gin.Context) {
 	plantId, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type error")
+		apires.ResFail(r, "type error")
 		return
 	}
 	staffId, err := strconv.Atoi(r.Param("staffId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type error")
+		apires.ResFail(r, "type error")
 		return
 	}
 
@@ -108,9 +113,9 @@ func Get(r *gin.Context) {
 	var output *proto.Staffs
 	if err := models.Staff.Get(plantId, staffId, &output); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "get failed")
+		apires.ResFail(r, "get failed")
 	} else {
-		json_message.ResOk(r, "get succeed", output)
+		apires.ResOk(r, "get succeed", output)
 	}
 }
 
@@ -120,13 +125,13 @@ func Update(r *gin.Context) {
 	plant_id, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type Failed")
+		apires.ResFail(r, "type Failed")
 		return
 	}
 	id, err := strconv.Atoi(r.Param("staffId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "type failed")
+		apires.ResFail(r, "type failed")
 		return
 	}
 	//获取输入的信息
@@ -134,7 +139,7 @@ func Update(r *gin.Context) {
 	err = r.Bind(&input)
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "bind failed")
+		apires.ResFail(r, "bind failed")
 		return
 	}
 
@@ -142,8 +147,8 @@ func Update(r *gin.Context) {
 	//更新数据
 	if err := models.Staff.Update(plant_id, id, &input, &output); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "update failed")
+		apires.ResFail(r, "update failed")
 	} else {
-		json_message.ResOk(r, "update succeed", output)
+		apires.ResOk(r, "update succeed", output)
 	}
 }

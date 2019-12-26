@@ -3,76 +3,88 @@ package models
 import (
 	"account_exam/cmd/db"
 	"account_exam/proto"
+	"github.com/jmoiron/sqlx"
 )
 
-type DepartmentInput struct {
-	proto.Department
+type departmentController struct {
+	db *sqlx.DB
 }
 
-func (d DepartmentInput) GetByPlantsId() (info []proto.Department, err error) {
-	query := `SELECT * FROM departments WHERE plant_id=$1`
-	err = database.DB.Select(&info, query, d.PlantID)
+var Department = &departmentController{db: database.DB}
+
+func (d departmentController) List(plantId int, output *[]*proto.DepartmentOutput) (err error) {
+	//noinspection ALL
+	query := `
+	SELECT * 
+	FROM departments 
+	WHERE plant_id=$1`
+
+	err = d.db.Select(output, query, plantId)
 	return
 }
 
-func (d DepartmentInput) Get() (info proto.Department, err error) {
-	query := `SELECT * FROM departments WHERE plant_id=$1 AND id=$2`
+func (d departmentController) Get(plantId, id int, output interface{}) (err error) {
+	//noinspection ALL
+	query := `
+	SELECT * 
+	FROM departments 
+	WHERE plant_id=$1 AND id=$2`
 
-	query1 := `WITH t1 AS (
-				SELECT d1.*,row_to_json(d2.*) AS parent_department FROM departments d1 WHERE 
-				)`
-	err = database.DB.Get(&info, query, d.PlantID, d.ID)
-	if info.ParentID > 0 {
-		err = database.DB.Get(&info, query1, d.PlantID, d.ID)
-	}
+	err = d.db.Get(output, query, plantId, id)
+
 	return
 }
 
-func (d DepartmentInput) Create() (err error) {
-	tx := database.DB.MustBegin()
+func (d departmentController) Create(plantId int, input proto.DepartmentInput, output interface{}) (err error) {
+	tx := d.db.MustBegin()
 
-	query := `INSERT INTO departments(name,code,plant_id,description,parent_id) values($1,$2,$3,$4,$5)`
+	//noinspection ALL
+	query := `
+	INSERT INTO departments(
+		name,code,plant_id,description
+	) values(
+		$1,$2,$3,$4
+	) 
+	RETURNING *`
 
-	if _, err = tx.Exec(query, d.Name, d.Code, d.PlantID, d.Description, d.ParentID); err != nil {
-		tx.Rollback()
-		return
-	} else {
-		tx.Commit()
-		return
-	}
+	err = tx.Get(output, query, input.Name, input.Code, plantId, input.Description)
+
+	tx.Commit()
+	return
 }
 
-func (d DepartmentInput) Update() (err error) {
-	tx := database.DB.MustBegin()
+func (d departmentController) Update(plantId, id int, input proto.DepartmentInput, output interface{}) (err error) {
+	tx := d.db.MustBegin()
 
-	query := `UPDATE departments 
-				SET (name,code,description,updated_at)=($1,$2,$3,CURRENT_TIMESTAMP) 
-				WHERE plant_id=$4 AND id=$5`
+	//noinspection ALL
+	query := `
+	UPDATE departments 
+	SET (
+		name,code,description,updated_at
+	) = (
+		$1,$2,$3,CURRENT_TIMESTAMP
+	) 
+	WHERE plant_id=$4 AND id=$5 
+	RETURNING *`
 
-	if _, err = tx.Exec(query, d.Name, d.Code, d.Description, d.PlantID, d.ID); err != nil {
-		tx.Rollback()
-		return
-	} else {
-		tx.Commit()
-		return
-	}
+	err = tx.Get(output, query, input.Name, input.Code, input.Description, plantId, id)
+
+	tx.Commit()
+	return
+
 }
 
-func (d DepartmentInput) DeleteById() (err error) {
-	tx := database.DB.MustBegin()
+func (d departmentController) Delete(plantId, id int) (err error) {
+	tx := d.db.MustBegin()
 
-	var info proto.Department
+	//noinspection ALL
+	query := `
+	UPDATE departments 
+	SET 
+		deleted=true ,updated_at = CURRENT_TIMESTAMP
+	WHERE plant_id=$1 AND id=$2`
 
-	query1 := `SELECT * FROM departments WHERE plant_id=$1 AND id=$2`
-
-	query2 := `UPDATE departments 
-				SET deleted=true ,updated_at = CURRENT_TIMESTAMP
-				WHERE plant_id=$1 AND id=$2`
-
-	if err = tx.Get(&info, query1, d.PlantID, d.ID); err != nil {
-		tx.Rollback()
-		return
-	} else if _, err = tx.Exec(query2, d.PlantID, d.ID); err != nil {
+	if _, err = tx.Exec(query, plantId, id); err != nil {
 		tx.Rollback()
 		return
 	} else {

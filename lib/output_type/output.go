@@ -1,8 +1,8 @@
 package output_type
 
 import (
-	"errors"
 	"account_exam/proto"
+	"errors"
 )
 
 func JsonArrTo(js interface{}) (info interface{}, err error) {
@@ -40,13 +40,13 @@ func staffs(staff []proto.Staffs) (info []proto.StuffOutput, err error) {
 		info = append(info, in)
 
 		if staff[k].Department != nil {
-			//err = json.Unmarshal(staff[k].Department.([]byte), &info[k].Department)
+			err = json.Unmarshal(staff[k].Department.([]byte), &info[k].Department)
 		}
 		if staff[k].Post != nil {
-			//err = json.Unmarshal(staff[k].Post.([]byte), &info[k].Post)
+			err = json.Unmarshal(staff[k].Post.([]byte), &info[k].Post)
 		}
 		if staff[k].User != nil {
-			//err = json.Unmarshal(staff[k].User.([]byte), &info[k].User)
+			err = json.Unmarshal(staff[k].User.([]byte), &info[k].User)
 		}
 		return
 	}

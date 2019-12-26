@@ -5,7 +5,6 @@ import (
 	util "account_exam/lib/postgresql"
 	"account_exam/proto"
 	"github.com/jmoiron/sqlx"
-	"log"
 )
 
 type staffsController struct {
@@ -15,8 +14,7 @@ type staffsController struct {
 var Staff = &staffsController{db: database.DB}
 
 func (s staffsController) List(plantId int, param *proto.StaffsQueryParam, outputs interface{}) (err error) {
-	log.Println(Staff.db)
-	log.Println(database.DB)
+	//noinspection ALL
 	query1 := `
 	With t1 AS(
 		SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post FROM staffs s
@@ -32,6 +30,7 @@ func (s staffsController) List(plantId int, param *proto.StaffsQueryParam, outpu
 }
 
 func (s staffsController) Get(plantId, id int, output interface{}) (err error) {
+	//noinspection ALL
 	query := `
 	WITH t1 AS(
 		SELECT s.*,row_to_json(d.*) AS department ,row_to_json(p.*) AS post FROM staffs s
@@ -47,6 +46,7 @@ func (s staffsController) Get(plantId, id int, output interface{}) (err error) {
 func (s staffsController) Create(plantId int, input *proto.StaffsInput, output interface{}) (err error) {
 	tx := s.db.MustBegin()
 
+	//noinspection ALL
 	query := `
 	INSERT INTO staffs(
 		name,uid,plant_id,sex,job_number,avatar
@@ -66,6 +66,7 @@ func (s staffsController) Create(plantId int, input *proto.StaffsInput, output i
 func (s staffsController) Update(plantId, id int, input *proto.StaffsInput, output interface{}) (err error) {
 	tx := s.db.MustBegin()
 
+	//noinspection ALL
 	query := `
 	UPDATE staffs SET (
 		name,uid,sex,job_number,avatar,updated_at
@@ -86,6 +87,8 @@ func (s staffsController) Update(plantId, id int, input *proto.StaffsInput, outp
 
 func (s staffsController) Delete(plantId, id int) (err error) {
 	tx := s.db.MustBegin()
+
+	//noinspection ALL
 	query1 := `
 	UPDATE staffs SET 
 		deleted=true ,updated_at = CURRENT_TIMESTAMP, uid = NULL
