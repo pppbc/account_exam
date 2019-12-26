@@ -82,10 +82,9 @@ type StaffsOutput struct {
 
 //staffs param参数
 type StaffsQueryParam struct {
-	PlantId      int     `param:"plantId"`
-	Limit        int64   `param:"limit"`
-	Offset       int64   `param:"offset"`
-	Deleted      *bool   `param:"deleted"`
+	Limit        int64   `param:"limit" form:"limit"`
+	Offset       int64   `param:"offset" form:"offset"`
+	Deleted      *bool   `param:"deleted" form:"deleted"`
 	Name         *string `param:"name"`
 	JobNumber    *string `param:"jobNumber"`
 	Rfid         *string `param:"rfid"`

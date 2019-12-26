@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+const (
+	MinOffset     = 0
+	MinLimit      = 0
+	MaxLimit      = 1000
+	MaxOffset     = 10000000
+	DefaultLimit  = 20
+	DefaultOffset = 0
+)
+
 //公司
 type Enterprises struct {
 	ID             int       `json:"id" db:"id"`

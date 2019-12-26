@@ -32,5 +32,6 @@ func Res(code int, r *gin.Context, status int, desc string, data interface{}) {
 	}
 	//返回
 	r.Header("token", "xxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	r.SetCookie("token", "tokentokentokentoken", 1, "", "", true, true)
 	r.JSON(code, j)
 }

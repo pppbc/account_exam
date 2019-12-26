@@ -9,17 +9,16 @@ import (
 	"strconv"
 )
 
-type B struct {
-	PlantId int `param:"plantId"`
-	ID      int `param:"id"`
-}
-
 //员工列表
 func List(r *gin.Context) {
-
 	//初始化参数
 	var params proto.StaffsQueryParam
+	if err := r.BindQuery(&params); err != nil {
+		log.Println(err)
+		apires.ResFail(r, "init params failed")
+	}
 
+	//工厂ID
 	plantId, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
@@ -31,7 +30,7 @@ func List(r *gin.Context) {
 	var output []*proto.StaffsOutput
 
 	//获取数据（这里需要返回staffs-users-departments-posts）
-	if err := models.Staff.List(plantId, &params, &output); err != nil {
+	if err := models.Staff.List(plantId, params, &output); err != nil {
 		log.Println(err)
 		apires.ResFail(r, "get staffs failed")
 		return

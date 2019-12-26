@@ -13,18 +13,50 @@ type staffsController struct {
 
 var Staff = &staffsController{db: database.DB}
 
-func (s staffsController) List(plantId int, param *proto.StaffsQueryParam, outputs interface{}) (err error) {
-	//noinspection ALL
-	query1 := `
-	With t1 AS(
-		SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post FROM staffs s
-		LEFT JOIN departments_users_rel r ON s.id=r.staff_id
-		LEFT JOIN departments d ON r.department_id=d.id
-		LEFT JOIN plant_posts p ON r.post_id=p.id
-		WHERE s.plant_id=$1 AND s.deleted<>true
-	) SELECT json_agg(re.*) FROM t1 re;`
+func (s staffsController) List(plantId int, params proto.StaffsQueryParam, outputs interface{}) (err error) {
+	if params.Offset <= 0 && params.Limit <= 0 {
+		params.Offset = proto.MinOffset
+		params.Limit = proto.MaxLimit
+	}
 
-	err = s.db.Get(&util.PgJsonScanWrap{Value: outputs}, query1, plantId)
+	if params.Offset < proto.MinOffset || params.Offset > proto.MaxOffset {
+		params.Offset = proto.DefaultOffset
+	}
+
+	if params.Limit < proto.MinLimit || params.Limit > proto.MaxLimit {
+		params.Limit = proto.DefaultLimit
+	}
+	filterStmt := ``
+	if plantId != 0 {
+		filterStmt += ` AND s.plant_id=${plant_id}`
+	}
+	if params.Deleted != nil {
+		filterStmt += ` AND s.deleted=${deleted}`
+	}
+	stmt := `
+	With t1 AS(
+		SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post 
+		FROM staffs s 
+			LEFT JOIN departments_users_rel r 
+				ON s.id=r.staff_id 
+			LEFT JOIN departments d 
+				ON r.department_id=d.id 
+			LEFT JOIN plant_posts p 
+				ON r.post_id=p.id 
+		WHERE 1 = 1` + filterStmt + `
+		ORDER BY s.id ASC 
+		LIMIT ${limit} OFFSET ${offset}
+	) 
+	SELECT json_agg(re.*) FROM t1 re
+	`
+
+	query, args := util.PgMapQuery(stmt, map[string]interface{}{
+		"{limit}":    params.Limit,
+		"{offset}":   params.Offset,
+		"{deleted}":  *params.Deleted,
+		"{plant_id}": plantId,
+	})
+	err = s.db.Get(&util.PgJsonScanWrap{Value: outputs}, query, args...)
 
 	return
 }
