@@ -1,11 +1,12 @@
 package main
 
 import (
-	"account_exam/cmd/db"
+	database "account_exam/cmd/db"
 	"account_exam/cmd/router"
 )
 
 func main() {
-	db.ConfigDB()
+	//database.ConnectDB()
 	router.ConfigRouters()
+	defer database.DisconnectedDB()
 }

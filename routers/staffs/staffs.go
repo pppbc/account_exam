@@ -11,31 +11,41 @@ import (
 
 //员工列表
 func List(r *gin.Context) {
-	//获取参数
-	plant_id, err := strconv.Atoi(r.Param("plantId"))
+
+	//初始化参数
+	var params proto.StaffsQueryParam
+
+	plantId, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
+		json_message.ResFail(r, "type failed")
 		return
 	}
-	//初始化input对象
-	var input models.StaffInput
-	input.PlantID = plant_id
+
+	//初始化output对象
+	var output []*proto.StaffsOutput
 
 	//获取数据（这里需要返回staffs-users-departments-posts）
-	var info []*proto.Staffs
-	if err := input.GetByPlantsId(&info); err != nil {
+	if err := models.Staff.List(plantId, &params, &output); err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Get Staffs Failed")
+		json_message.ResFail(r, "get staffs failed")
 		return
 	} else {
-		json_message.ResOk(r, "succeed", info)
+		json_message.ResOk(r, "succeed", output)
 		return
 	}
 }
 
 //新增一组数据
 func Add(r *gin.Context) {
+	//获取输入数据
+	var input proto.StaffsInput
+	err := r.Bind(&input)
+	if err != nil {
+		log.Println(err)
+		json_message.ResFail(r, "bind failed")
+		return
+	}
 	//获取参数
 	plant_id, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
@@ -43,34 +53,14 @@ func Add(r *gin.Context) {
 		json_message.ResFail(r, "Type failed")
 		return
 	}
-	uid, err := strconv.Atoi(r.PostForm("uid"))
-	if err != nil {
-		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
-		return
-	}
-	sex, err := strconv.Atoi(r.PostForm("sex"))
-	if err != nil {
-		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
-		return
-	}
-
-	//初始化input
-	var input models.StaffInput
-	input.Name = r.PostForm("name")
-	input.UID = uid
-	input.PlantID = plant_id
-	input.Sex = sex
-	input.JobNumber = r.PostForm("jobNumber")
-	input.Avatar = r.PostForm("avatar")
 
 	//创建
-	if err := input.Create(); err != nil {
+	var output proto.StaffsOutput
+	if err := models.Staff.Create(plant_id, &input, &output); err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "Create Failed")
 	} else {
-		json_message.ResOk(r, "success", nil)
+		json_message.ResOk(r, "success", output)
 	}
 }
 
@@ -89,14 +79,8 @@ func Deleted(r *gin.Context) {
 		json_message.ResFail(r, "type error")
 		return
 	}
-
-	//初始化input
-	var input models.StaffInput
-	input.PlantID = plantId
-	input.ID = staffId
-
 	//删除staffs表记录，删除department-users-rel表记录
-	if err := input.DeleteById(); err != nil {
+	if err := models.Staff.Delete(plantId, staffId); err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "deleted failed")
 	} else {
@@ -120,14 +104,9 @@ func Get(r *gin.Context) {
 		return
 	}
 
-	//初始化input
-	var input models.StaffInput
-	input.PlantID = plantId
-	input.ID = staffId
-
-	//获取
+	//获取员工信息
 	var output *proto.Staffs
-	if err := input.Get(&output); err != nil {
+	if err := models.Staff.Get(plantId, staffId, &output); err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "get failed")
 	} else {
@@ -137,47 +116,34 @@ func Get(r *gin.Context) {
 
 //更新指定员工数据
 func Update(r *gin.Context) {
+	//获取plantId,id
 	plant_id, err := strconv.Atoi(r.Param("plantId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
+		json_message.ResFail(r, "type Failed")
 		return
 	}
 	id, err := strconv.Atoi(r.Param("staffId"))
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Type failed")
+		json_message.ResFail(r, "type failed")
 		return
 	}
-	uid, err := strconv.Atoi(r.PostForm("uid"))
+	//获取输入的信息
+	var input proto.StaffsInput
+	err = r.Bind(&input)
 	if err != nil {
 		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
-		return
-
-	}
-	sex, err := strconv.Atoi(r.PostForm("sex"))
-	if err != nil {
-		log.Println(err)
-		json_message.ResFail(r, "Type Failed")
+		json_message.ResFail(r, "bind failed")
 		return
 	}
 
-	//input数据
-	var input models.StaffInput
-	input.ID = id
-	input.Name = r.PostForm("name")
-	input.UID = uid
-	input.PlantID = plant_id
-	input.Sex = sex
-	input.JobNumber = r.PostForm("jobNumber")
-	input.Avatar = r.PostForm("avatar")
-
+	var output proto.StaffsOutput
 	//更新数据
-	if err := input.Update(); err != nil {
+	if err := models.Staff.Update(plant_id, id, &input, &output); err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "update failed")
 	} else {
-		json_message.ResOk(r, "update succeed", nil)
+		json_message.ResOk(r, "update succeed", output)
 	}
 }

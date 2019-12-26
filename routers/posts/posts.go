@@ -3,7 +3,6 @@ package posts
 import (
 	"account_exam/lib/json_message"
 	"account_exam/models"
-	"account_exam/proto"
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
@@ -85,8 +84,7 @@ func Get(r *gin.Context) {
 	input.ID = id
 
 	//获取记录
-	var output proto.Posts
-	if err := input.Get(&output); err != nil {
+	if output, err := input.Get(); err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "get post failed")
 	} else {
@@ -103,13 +101,14 @@ func Update(r *gin.Context) {
 		json_message.ResFail(r, "type failed")
 		return
 	}
-	id, err := strconv.Atoi(r.Param("postID"))
+	id, err := strconv.Atoi(r.Param("postId"))
+	log.Println(id)
 	if err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "type failed")
 		return
 	}
-	department_id, err := strconv.Atoi(r.Param("departmentId"))
+	department_id, err := strconv.Atoi(r.PostForm("departmentId"))
 	if err != nil {
 		log.Println(err)
 		json_message.ResFail(r, "type failed")

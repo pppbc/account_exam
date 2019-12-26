@@ -11,18 +11,18 @@ type PostInput struct {
 
 func (p PostInput) GetByPlantsId() (info []proto.Posts, err error) {
 	query := `SELECT * FROM plant_posts WHERE plant_id=$1`
-	err = db.DB.Select(&info, query, p.PlantID)
+	err = database.DB.Select(&info, query, p.PlantID)
 	return
 }
 
-func (p PostInput) Get(info interface{}) (err error) {
+func (p PostInput) Get() (info proto.Posts, err error) {
 	query := `SELECT * FROM plant_posts WHERE plant_id=$1 AND id=$2`
-	err = db.DB.Get(&info, query, p.PlantID, p.ID)
+	err = database.DB.Get(&info, query, p.PlantID, p.ID)
 	return
 }
 
 func (p PostInput) Create() (err error) {
-	tx := db.DB.MustBegin()
+	tx := database.DB.MustBegin()
 
 	query := `INSERT INTO plant_posts(name,department_id,plant_id,description) values($1,$2,$3,$4)`
 
@@ -36,7 +36,7 @@ func (p PostInput) Create() (err error) {
 }
 
 func (p PostInput) Update() (err error) {
-	tx := db.DB.MustBegin()
+	tx := database.DB.MustBegin()
 
 	query := `UPDATE plant_posts 
 				SET (name,department_id,description,updated_at)=($1,$2,$3,CURRENT_TIMESTAMP) 
@@ -52,13 +52,13 @@ func (p PostInput) Update() (err error) {
 }
 
 func (p PostInput) DeleteById() (err error) {
-	tx := db.DB.MustBegin()
+	tx := database.DB.MustBegin()
 
-	query1 := `UPDATE departments 
-				SET deleted=true ,updated_at = CURRENT_TIMESTAMP ,department_id=NULL
+	query1 := `UPDATE plant_posts 
+				SET deleted=true ,updated_at = CURRENT_TIMESTAMP ,department_id=0
 				WHERE plant_id=$1 AND id=$2`
 
-	if _, err := tx.Exec(query1, p.PlantID, p.ID); err != nil {
+	if _, err = tx.Exec(query1, p.PlantID, p.ID); err != nil {
 		tx.Rollback()
 		return
 	} else {

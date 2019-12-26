@@ -41,6 +41,7 @@ type Plants struct {
 //部门
 type Department struct {
 	ID          int       `json:"id" db:"id"`
+	ParentID    int       `json:"parentId" db:"parent_id"`
 	Name        string    `json:"name" db:"name"`
 	Code        string    `json:"code" db:"code"`
 	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
@@ -60,25 +61,6 @@ type Posts struct {
 	Deleted      bool      `json:"deleted" db:"deleted"`
 	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt    time.Time `json:"updatedAt" db:"updated_at"`
-}
-
-//员工
-type Staffs struct {
-	ID           int         `json:"id" db:"id"`
-	PlantID      int         `json:"plantId" db:"plant_id"`
-	UID          int         `json:"uid" db:"uid"`
-	Name         string      `json:"name" db:"name"`
-	Sex          int         `json:"sex" db:"sex"`
-	CreatedAt    time.Time   `json:"createdAt" db:"created_at"`
-	UpdatedAt    time.Time   `json:"updatedAt" db:"updated_at"`
-	Deleted      bool        `json:"deleted" db:"deleted"`
-	IPCEnabled   bool        `json:"ipcEnabled" db:"ipc_enabled"`
-	LoginEnabled bool        `json:"loginEnabled" db:"login_enabled"`
-	JobNumber    string      `json:"jobNumber" db:"job_number"`
-	Avatar       string      `json:"avatar" db:"avatar"`
-	Department   *Department `json:"department" db:"department"` //关联的部门
-	Post         *Posts      `json:"post" db:"post"`             //所处岗位
-	User         *Users      `json:"user" db:"user"`             //信息
 }
 
 //用户

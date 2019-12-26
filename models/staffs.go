@@ -1,49 +1,60 @@
 package models
 
 import (
-	"account_exam/cmd/db"
+	database "account_exam/cmd/db"
 	util "account_exam/lib/postgresql"
 	"account_exam/proto"
+	"github.com/jmoiron/sqlx"
 	"log"
 )
 
-type StaffInput struct {
-	proto.Staffs
+type staffsController struct {
+	db *sqlx.DB
 }
 
-func (s StaffInput) GetByPlantsId(info interface{}) (err error) {
-	query1 := `With t1 AS(
-	SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post FROM staffs s
-	LEFT JOIN departments_users_rel r ON s.id=r.staff_id
-	LEFT JOIN departments d ON r.department_id=d.id
-	LEFT JOIN plant_posts p ON r.post_id=p.id
-	WHERE s.plant_id=$1 AND s.deleted<>true
-)
-SELECT json_agg(re.*) FROM t1 re`
+var Staff = &staffsController{db: database.DB}
 
-	err = db.DB.Get(&util.PgJsonScanWrap{Value: info}, query1, s.PlantID)
+func (s staffsController) List(plantId int, param *proto.StaffsQueryParam, outputs interface{}) (err error) {
+	log.Println(Staff.db)
+	log.Println(database.DB)
+	query1 := `
+	With t1 AS(
+		SELECT s.*,row_to_json(d.*) AS department,row_to_json(p.*) AS post FROM staffs s
+		LEFT JOIN departments_users_rel r ON s.id=r.staff_id
+		LEFT JOIN departments d ON r.department_id=d.id
+		LEFT JOIN plant_posts p ON r.post_id=p.id
+		WHERE s.plant_id=$1 AND s.deleted<>true
+	) SELECT json_agg(re.*) FROM t1 re;`
+
+	err = s.db.Get(&util.PgJsonScanWrap{Value: outputs}, query1, plantId)
+
 	return
 }
 
-func (s StaffInput) Get(info interface{}) (err error) {
-	query := `WITH t1 AS(
-	SELECT s.*,row_to_json(d.*) AS department ,row_to_json(p.*) AS post FROM staffs s
-	LEFT JOIN departments_users_rel r ON s.id=r.staff_id
-	LEFT JOIN departments d ON r.department_id=d.id
-	LEFT JOIN plant_posts p ON r.post_id=p.id
-	WHERE s.plant_id=$1 AND s.id=$2
-	)
-	SELECT to_json(r1.*) FROM t1 r1`
-	err = db.DB.Get(&util.PgJsonScanWrap{Value: info}, query, s.PlantID, s.ID)
+func (s staffsController) Get(plantId, id int, output interface{}) (err error) {
+	query := `
+	WITH t1 AS(
+		SELECT s.*,row_to_json(d.*) AS department ,row_to_json(p.*) AS post FROM staffs s
+		LEFT JOIN departments_users_rel r ON s.id=r.staff_id
+		LEFT JOIN departments d ON r.department_id=d.id
+		LEFT JOIN plant_posts p ON r.post_id=p.id
+		WHERE s.plant_id=$1 AND s.id=$2
+	) SELECT to_json(r1.*) FROM t1 r1;`
+	err = s.db.Get(&util.PgJsonScanWrap{Value: output}, query, plantId, id)
 	return
 }
 
-func (s StaffInput) Create() (err error) {
-	tx := db.DB.MustBegin()
+func (s staffsController) Create(plantId int, input *proto.StaffsInput, output interface{}) (err error) {
+	tx := s.db.MustBegin()
 
-	query := `INSERT INTO staffs(name,uid,plant_id,sex,job_number,avatar) values($1,$2,$3,$4,$5,$6)`
+	query := `
+	INSERT INTO staffs(
+		name,uid,plant_id,sex,job_number,avatar
+	) values(
+		$1,$2,$3,$4,$5,$6
+	) RETURNING *;`
 
-	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Sex, s.JobNumber, s.Avatar); err != nil {
+	if err = tx.Get(output, query, input.Name, input.Uid, plantId, input.Sex, input.JobNumber, input.Avatar); err != nil {
 		tx.Rollback()
 		return
 	} else {
@@ -52,16 +63,19 @@ func (s StaffInput) Create() (err error) {
 	}
 }
 
-func (s StaffInput) Update() (err error) {
-	tx := db.DB.MustBegin()
+func (s staffsController) Update(plantId, id int, input *proto.StaffsInput, output interface{}) (err error) {
+	tx := s.db.MustBegin()
 
-	query := `UPDATE staffs SET (name,uid,sex,job_number,avatar,updated_at)=($1,$2,$4,$5,$6,CURRENT_TIMESTAMP) 
-	WHERE plant_id=$3 AND id=$7`
-	log.Println(s.Deleted)
-	log.Println(s.PlantID)
-	log.Println(s.ID)
+	query := `
+	UPDATE staffs SET (
+		name,uid,sex,job_number,avatar,updated_at
+	) = (
+		$1,$2,$4,$5,$6,CURRENT_TIMESTAMP
+	) WHERE 
+		plant_id=$3 AND id=$7 
+	RETURNING *;`
 
-	if _, err = tx.Exec(query, s.Name, s.UID, s.PlantID, s.Sex, s.JobNumber, s.Avatar, s.ID); err != nil {
+	if err = tx.Get(output, query, input.Name, input.Uid, plantId, input.Sex, input.JobNumber, input.Avatar, id); err != nil {
 		tx.Rollback()
 		return
 	} else {
@@ -70,12 +84,18 @@ func (s StaffInput) Update() (err error) {
 	}
 }
 
-func (s StaffInput) DeleteById() (err error) {
-	tx := db.DB.MustBegin()
-	query1 := `UPDATE staffs SET deleted=true ,updated_at = CURRENT_TIMESTAMP, uid = NULL
-		WHERE plant_id=$1 AND id=$2`
+func (s staffsController) Delete(plantId, id int) (err error) {
+	tx := s.db.MustBegin()
+	query1 := `
+	UPDATE staffs SET 
+		deleted=true ,updated_at = CURRENT_TIMESTAMP, uid = NULL
+	WHERE plant_id=$1 AND id=$2;`
 
-	tx.MustExec(query1, s.PlantID, s.ID)
-	tx.Commit()
-	return
+	if _, err = tx.Exec(query1, plantId, id); err != nil {
+		tx.Rollback()
+		return
+	} else {
+		tx.Commit()
+		return
+	}
 }
