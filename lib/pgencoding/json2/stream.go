@@ -502,7 +502,6 @@ func (dec *Decoder) peek() (byte, error) {
 }
 
 /*
-TODO
 
 // EncodeToken writes the given JSON token to the stream.
 // It returns an error if the delimiters [ ] { } are not properly used.

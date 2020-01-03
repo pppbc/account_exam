@@ -25,13 +25,11 @@ func ResFail(r *gin.Context, desc string) {
 //作出响应
 func Res(code int, r *gin.Context, status int, desc string, data interface{}) {
 	//数据封装
-	j := Info{
+	i := Info{
 		Status: status,
 		Desc:   desc,
 		Data:   data,
 	}
 	//返回
-	r.Header("token", "xxxxxxxxxxxxxxxxxxxxxxxxxxx")
-	r.SetCookie("token", "tokentokentokentoken", 1, "", "", true, true)
-	r.JSON(code, j)
+	r.JSON(code, i)
 }

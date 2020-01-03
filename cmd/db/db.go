@@ -16,7 +16,6 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Println(DB)
 	log.Println("Success Init PostgresSQL")
 }
 

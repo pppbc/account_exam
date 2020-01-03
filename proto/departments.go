@@ -22,7 +22,7 @@ type DepartmentQueryParam struct {
 	ProcessRelated *bool  `param:"processRel"`
 	Limit          int64  `param:"limit"`
 	Offset         int64  `param:"offset"`
-	Enabled        *bool  `param:"enabled"` // TODO: change to deleted
+	Enabled        *bool  `param:"enabled"` //
 	Deleted        *bool  `param:"deleted"`
 }
 
